@@ -90,7 +90,7 @@ package java.util.concurrent;
  *
  * @since 1.5
  * @author Doug Lea
- */
+ */ // “延迟”和“定期执行”的 ExecutorService
 public interface ScheduledExecutorService extends ExecutorService {
 
     /**
@@ -106,7 +106,7 @@ public interface ScheduledExecutorService extends ExecutorService {
      * @throws RejectedExecutionException if the task cannot be
      *         scheduled for execution
      * @throws NullPointerException if command is null
-     */
+     */ // // 创建并执行在给定延迟后启用的 ScheduledFuture。
     public ScheduledFuture<?> schedule(Runnable command,
                                        long delay, TimeUnit unit);
 
@@ -122,7 +122,7 @@ public interface ScheduledExecutorService extends ExecutorService {
      * @throws RejectedExecutionException if the task cannot be
      *         scheduled for execution
      * @throws NullPointerException if callable is null
-     */
+     */ // 创建并执行在给定延迟后启用的一次性操作。
     public <V> ScheduledFuture<V> schedule(Callable<V> callable,
                                            long delay, TimeUnit unit);
 
@@ -150,7 +150,7 @@ public interface ScheduledExecutorService extends ExecutorService {
      *         scheduled for execution
      * @throws NullPointerException if command is null
      * @throws IllegalArgumentException if period less than or equal to zero
-     */
+     */ // 创建并执行一个在给定初始延迟后首次启用的定期操作，后续操作具有给定的周期；
     public ScheduledFuture<?> scheduleAtFixedRate(Runnable command,
                                                   long initialDelay,
                                                   long period,
@@ -177,7 +177,7 @@ public interface ScheduledExecutorService extends ExecutorService {
      *         scheduled for execution
      * @throws NullPointerException if command is null
      * @throws IllegalArgumentException if delay less than or equal to zero
-     */
+     */ // 创建并执行一个在给定初始延迟后首次启用的定期操作，随后，在每一次执行终止和下一次执行开始之间都存在给定的延迟。
     public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command,
                                                      long initialDelay,
                                                      long delay,

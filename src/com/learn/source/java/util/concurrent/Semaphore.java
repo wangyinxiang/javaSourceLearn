@@ -152,7 +152,7 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  *
  * @since 1.5
  * @author Doug Lea
- */
+ */ // 信号量，中state代表剩余可获取的许可数
 public class Semaphore implements java.io.Serializable {
     private static final long serialVersionUID = -3222578661600680210L;
     /** All mechanics via AbstractQueuedSynchronizer subclass */
@@ -187,10 +187,10 @@ public class Semaphore implements java.io.Serializable {
         protected final boolean tryReleaseShared(int releases) {
             for (;;) {
                 int current = getState();
-                int next = current + releases;
+                int next = current + releases; //信号量的许可数 = 当前信号剩余许可数 + 待释放的信号许可数
                 if (next < current) // overflow
                     throw new Error("Maximum permit count exceeded");
-                if (compareAndSetState(current, next))
+                if (compareAndSetState(current, next)) //设置可获取的信号许可数为next
                     return true;
             }
         }
@@ -242,12 +242,12 @@ public class Semaphore implements java.io.Serializable {
 
         protected int tryAcquireShared(int acquires) {
             for (;;) {
-                if (hasQueuedPredecessors())
+                if (hasQueuedPredecessors()) //判断该线程是否位于CLH队列的列头，从而实现公平锁
                     return -1;
-                int available = getState();
-                int remaining = available - acquires;
+                int available = getState(); //获取当前的信号量许可
+                int remaining = available - acquires; //设置“获得acquires个信号量许可之后，剩余的信号量许可数”
                 if (remaining < 0 ||
-                    compareAndSetState(available, remaining))
+                    compareAndSetState(available, remaining)) //CAS设置信号量
                     return remaining;
             }
         }

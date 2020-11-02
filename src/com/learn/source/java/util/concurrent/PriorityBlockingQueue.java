@@ -128,7 +128,7 @@ public class PriorityBlockingQueue<E> extends AbstractQueue<E>
 
     /**
      * Default array capacity.
-     */
+     */ // 默认容量
     private static final int DEFAULT_INITIAL_CAPACITY = 11;
 
     /**
@@ -136,7 +136,7 @@ public class PriorityBlockingQueue<E> extends AbstractQueue<E>
      * Some VMs reserve some header words in an array.
      * Attempts to allocate larger arrays may result in
      * OutOfMemoryError: Requested array size exceeds VM limit
-     */
+     */ // 最大容量
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
     /**
@@ -146,28 +146,28 @@ public class PriorityBlockingQueue<E> extends AbstractQueue<E>
      * natural ordering, if comparator is null: For each node n in the
      * heap and each descendant d of n, n <= d.  The element with the
      * lowest value is in queue[0], assuming the queue is nonempty.
-     */
+     */ // 二叉堆数组
     private transient Object[] queue;
 
     /**
      * The number of elements in the priority queue.
-     */
+     */ // 队列元素的个数
     private transient int size;
 
     /**
      * The comparator, or null if priority queue uses elements'
      * natural ordering.
-     */
+     */ // 比较器，如果为空，则为自然顺序
     private transient Comparator<? super E> comparator;
 
     /**
      * Lock used for all public operations
-     */
+     */ // 内部锁
     private final ReentrantLock lock;
 
     /**
      * Condition for blocking when empty
-     */
+     */ // 只有一个Condition，因为它是无界的
     private final Condition notEmpty;
 
     /**
@@ -179,7 +179,7 @@ public class PriorityBlockingQueue<E> extends AbstractQueue<E>
      * A plain PriorityQueue used only for serialization,
      * to maintain compatibility with previous versions
      * of this class. Non-null only during serialization/deserialization.
-     */
+     */ // 优先队列：主要用于序列化，这是为了兼容之前的版本。只有在序列化和反序列化才非空
     private PriorityQueue<E> q;
 
     /**
@@ -284,18 +284,18 @@ public class PriorityBlockingQueue<E> extends AbstractQueue<E>
      *
      * @param array the heap array
      * @param oldCap the length of the array
-     */
+     */ // 扩容
     private void tryGrow(Object[] array, int oldCap) {
-        lock.unlock(); // must release and then re-acquire main lock
+        lock.unlock(); // must release and then re-acquire main lock  // 扩容操作使用自旋，不需要锁主锁，释放
         Object[] newArray = null;
         if (allocationSpinLock == 0 &&
             UNSAFE.compareAndSwapInt(this, allocationSpinLockOffset,
-                                     0, 1)) {
+                                     0, 1)) { // CAS 占用
             try {
                 int newCap = oldCap + ((oldCap < 64) ?
                                        (oldCap + 2) : // grow faster if small
-                                       (oldCap >> 1));
-                if (newCap - MAX_ARRAY_SIZE > 0) {    // possible overflow
+                                       (oldCap >> 1)); // 新容量  最小翻倍
+                if (newCap - MAX_ARRAY_SIZE > 0) {    // possible overflow // 超过
                     int minCap = oldCap + 1;
                     if (minCap < 0 || minCap > MAX_ARRAY_SIZE)
                         throw new OutOfMemoryError();
@@ -304,13 +304,13 @@ public class PriorityBlockingQueue<E> extends AbstractQueue<E>
                 if (newCap > oldCap && queue == array)
                     newArray = new Object[newCap];
             } finally {
-                allocationSpinLock = 0;
+                allocationSpinLock = 0;  // 扩容后allocationSpinLock = 0 代表释放了自旋锁
             }
         }
         if (newArray == null) // back off if another thread is allocating
-            Thread.yield();
-        lock.lock();
-        if (newArray != null && queue == array) {
+            Thread.yield(); // 到这里如果是本线程扩容newArray肯定是不为null，为null就是其他线程在处理扩容，那就让给别的线程处理
+        lock.lock();  // 主锁获取锁
+        if (newArray != null && queue == array) { // 数组复制
             queue = newArray;
             System.arraycopy(array, 0, newArray, 0, oldCap);
         }
@@ -318,15 +318,15 @@ public class PriorityBlockingQueue<E> extends AbstractQueue<E>
 
     /**
      * Mechanics for poll().  Call only while holding lock.
-     */
+     */ // 出队的永远都是第一个元素：array[0]
     private E dequeue() {
         int n = size - 1;
         if (n < 0)
             return null;
         else {
             Object[] array = queue;
-            E result = (E) array[0];
-            E x = (E) array[n];
+            E result = (E) array[0]; // 出队元素
+            E x = (E) array[n]; // 最后一个元素（也就是插入到空穴中的元素）
             array[n] = null;
             Comparator<? super E> cmp = comparator;
             if (cmp == null)
@@ -352,15 +352,15 @@ public class PriorityBlockingQueue<E> extends AbstractQueue<E>
      * @param k the position to fill
      * @param x the item to insert
      * @param array the heap array
-     */
+     */ // 将元素X插入到数组中，然后进行调整以保持二叉堆的特性
     private static <T> void siftUpComparable(int k, T x, Object[] array) {
         Comparable<? super T> key = (Comparable<? super T>) x;
-        while (k > 0) {
-            int parent = (k - 1) >>> 1;
+        while (k > 0) { // “上冒”过程
+            int parent = (k - 1) >>> 1; // 父级节点 （n - ） / 2
             Object e = array[parent];
-            if (key.compareTo((T) e) >= 0)
+            if (key.compareTo((T) e) >= 0) // key >= parent 完成（最大堆）
                 break;
-            array[k] = e;
+            array[k] = e; // key < parent 替换
             k = parent;
         }
         array[k] = key;
@@ -482,15 +482,15 @@ public class PriorityBlockingQueue<E> extends AbstractQueue<E>
         int n, cap;
         Object[] array;
         while ((n = size) >= (cap = (array = queue).length))
-            tryGrow(array, cap);
+            tryGrow(array, cap); // 扩容
         try {
             Comparator<? super E> cmp = comparator;
-            if (cmp == null)
+            if (cmp == null) // 根据比较器是否为null，做不同的处理
                 siftUpComparable(n, e, array);
             else
                 siftUpUsingComparator(n, e, array, cmp);
             size = n + 1;
-            notEmpty.signal();
+            notEmpty.signal(); // 唤醒正在等待的消费者线程
         } finally {
             lock.unlock();
         }

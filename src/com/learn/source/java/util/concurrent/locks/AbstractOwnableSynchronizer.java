@@ -47,6 +47,11 @@ package java.util.concurrent.locks;
  * @since 1.6
  * @author Doug Lea
  */
+/*
+ * 一种可能由线程独占的同步器。此类提供了创建锁和相关同步器的基础，这些同步器可能需要所有权的概念。
+ * AbstractOwnableSynchronizer类本身不管理或使用此信息。
+ * 然而，子类和工具可以适当使用并维护这个值来帮助控制和监视访问并提供问题诊断。
+ */
 public abstract class AbstractOwnableSynchronizer
     implements java.io.Serializable {
 
@@ -56,11 +61,13 @@ public abstract class AbstractOwnableSynchronizer
     /**
      * Empty constructor for use by subclasses.
      */
+    // 由子类实现
     protected AbstractOwnableSynchronizer() { }
 
     /**
      * The current owner of exclusive mode synchronization.
      */
+    // 独占模式同步器的当前所有者（线程）
     private transient Thread exclusiveOwnerThread;
 
     /**
@@ -69,6 +76,11 @@ public abstract class AbstractOwnableSynchronizer
      * This method does not otherwise impose any synchronization or
      * {@code volatile} field accesses.
      * @param thread the owner thread
+     */
+    /*
+     * 设置当前拥有独占访问权限的线程。
+     * null值表示没有线程拥有访问权
+     * 此方法不会强制任何同步或volatile字段访问。
      */
     protected final void setExclusiveOwnerThread(Thread thread) {
         exclusiveOwnerThread = thread;
@@ -80,6 +92,7 @@ public abstract class AbstractOwnableSynchronizer
      * impose any synchronization or {@code volatile} field accesses.
      * @return the owner thread
      */
+    // 获取当前拥有独占访问权限的线程，null表示未设置
     protected final Thread getExclusiveOwnerThread() {
         return exclusiveOwnerThread;
     }

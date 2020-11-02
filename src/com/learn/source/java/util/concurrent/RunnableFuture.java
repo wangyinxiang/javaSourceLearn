@@ -44,11 +44,11 @@ package java.util.concurrent;
  * @since 1.6
  * @author Doug Lea
  * @param <V> The result type returned by this Future's {@code get} method
- */
+ */ // 完成 Future 并允许访问其结果
 public interface RunnableFuture<V> extends Runnable, Future<V> {
     /**
      * Sets this Future to the result of its computation
      * unless it has been cancelled.
-     */
+     */ // //在未被取消的情况下，将此 Future 设置为计算的结果
     void run();
 }

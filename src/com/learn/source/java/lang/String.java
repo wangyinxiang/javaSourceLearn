@@ -111,8 +111,7 @@ import java.util.regex.PatternSyntaxException;
 public final class String
     implements java.io.Serializable, Comparable<String>, CharSequence {
     /** The value is used for character storage. */
-    // character 存储
-    private final char value[];
+    private final char value[]; // character 存储字符串的每个字符
 
     /** Cache the hash code for the string */
     private int hash; // Default to 0
@@ -188,7 +187,7 @@ public final class String
      *          If the {@code offset} and {@code count} arguments index
      *          characters outside the bounds of the {@code value} array
      */
-    public String(char value[], int offset, int count) {
+    public String(char value[], int offset, int count) { // 从offset开始，长度为count的字符构成新字符串
         if (offset < 0) {
             throw new StringIndexOutOfBoundsException(offset);
         }
@@ -824,8 +823,7 @@ public final class String
         if (srcBegin > srcEnd) {
             throw new StringIndexOutOfBoundsException(srcEnd - srcBegin);
         }
-        // 执行到这里，说明没有出现下标越界，调用 arraycopy 把该字符串追加到尾部
-        System.arraycopy(value, srcBegin, dst, dstBegin, srcEnd - srcBegin);
+        System.arraycopy(value, srcBegin, dst, dstBegin, srcEnd - srcBegin); // 执行到这里，说明没有出现下标越界，调用 arraycopy 把该字符串追加到尾部
     }
 
     /**
@@ -1465,12 +1463,13 @@ public final class String
      * @return  a hash code value for this object.
      */
     public int hashCode() {
-        int h = hash;
+        int h = hash; // 缓存值
         if (h == 0 && value.length > 0) {
             char val[] = value;
 
+            // s[0]*31^(n-1) + s[1]*31^(n-2) + ... + s[n-1]
             for (int i = 0; i < value.length; i++) {
-                h = 31 * h + val[i];
+                h = 31 * h + val[i]; // 31 为特殊质数，能减少hash碰撞次数
             }
             hash = h;
         }

@@ -608,10 +608,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      *         previously associated <tt>null</tt> with <tt>key</tt>.)
      */
     public V put(K key, V value) {
-        // 1. 计算出Key的hash值
-        // 2. hashcode的高位运算
-        // 3. 通过亦或运算得到hash值
-        return putVal(hash(key), key, value, false, true);
+        return putVal(hash(key), key, value, false, true);  // 1. 计算出Key的hash值 2. hashcode的高位运算 3. 通过亦或运算得到hash值
     }
 
     /**
@@ -631,8 +628,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             n = (tab = resize()).length; // table为空时，调用resize()扩容并创建table
         if ((p = tab[i = (n - 1) & hash]) == null) // 取出下标索引位置元素，为空
             tab[i] = newNode(hash, key, value, null); // 此位置没有对象，创建新的Node结点
-        else {  // 当前索引位置已有元素
-            // e:加入新元素后的Node  p:通过传入的hash值定位到的Node
+        else {  // 当前索引位置已有元素 e:加入新元素后的Node  p:通过传入的hash值定位到的Node
             Node<K,V> e; K k;
             if (p.hash == hash &&
                 ((k = p.key) == key || (key != null && key.equals(k))))
@@ -647,9 +643,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                             treeifyBin(tab, hash);  // 转为红黑树
                         break;
                     }
-                    // 是否和当前结点想等，相等立即结束循环
                     if (e.hash == hash &&
-                        ((k = e.key) == key || (key != null && key.equals(k))))
+                        ((k = e.key) == key || (key != null && key.equals(k))))  // 是否和当前结点想等，相等立即结束循环
                         break;
                     p = e;
                 }
@@ -717,15 +712,11 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                     else if (e instanceof TreeNode)
                         ((TreeNode<K,V>)e).split(this, newTab, j, oldCap);
                     else { // preserve order 维持原有顺序
-                        // loHead 原位置头结点， loTail 原位置尾结点
-                        // hiHead 新位置头结点， hiTail 新位置尾结点
-                        Node<K,V> loHead = null, loTail = null;
-                        Node<K,V> hiHead = null, hiTail = null;
+                        Node<K,V> loHead = null, loTail = null; // loHead 原位置头结点， loTail 原位置尾结点
+                        Node<K,V> hiHead = null, hiTail = null; // hiHead 新位置头结点， hiTail 新位置尾结点
                         Node<K,V> next;
-                        do {
+                        do { // 我们使用的是2次幂的扩展(指长度扩为原来2倍)，所以，元素的位置要么是在原位置，要么是在原位置再移动2次幂的位置。
                             next = e.next;
-                            // 我们使用的是2次幂的扩展(指长度扩为原来2倍)，所以，元素的位置要么是在原位置，要么是在原位置再移动2次幂的位置。
-                            // 不需要像JDK1.7的实现那样重新计算hash，只需要看看原来的hash值新增的那个bit是1还是0就好了，是0的话索引没变，是1的话索引变成“原索引+oldCap”
                             if ((e.hash & oldCap) == 0) { // == 0 说明是原位置，== 1说明移动到新位置（index+oldCap）
                                 if (loTail == null)
                                     loHead = e;

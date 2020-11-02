@@ -54,14 +54,14 @@ public final class Integer extends Number implements Comparable<Integer> {
      * A constant holding the minimum value an {@code int} can
      * have, -2<sup>31</sup>.
      */
-    @Native public static final int   MIN_VALUE = 0x80000000;
+    @Native public static final int   MIN_VALUE = 0x80000000; // 最小值-2的31次方-1
+
 
     /**
      * A constant holding the maximum value an {@code int} can
      * have, 2<sup>31</sup>-1.
      */
     @Native public static final int   MAX_VALUE = 0x7fffffff;
-
     /**
      * The {@code Class} instance representing the primitive type
      * {@code int}.
@@ -81,7 +81,7 @@ public final class Integer extends Number implements Comparable<Integer> {
         'i' , 'j' , 'k' , 'l' , 'm' , 'n' ,
         'o' , 'p' , 'q' , 'r' , 's' , 't' ,
         'u' , 'v' , 'w' , 'x' , 'y' , 'z'
-    };
+    }; // 将数字表示为字符串的所有可能的字符
 
     /**
      * Returns a string representation of the first argument in the
@@ -121,13 +121,13 @@ public final class Integer extends Number implements Comparable<Integer> {
      *  {@code Integer.toString(n, 16).toUpperCase()}
      * </blockquote>
      *
-     * @param   i       an integer to be converted to a string.
-     * @param   radix   the radix to use in the string representation.
+     * @param   i       an integer to be converted to a string. 要转换为字符串的整数
+     * @param   radix   the radix to use in the string representation. 要在字符串表示中使用的基数(进制)，默认10进制
      * @return  a string representation of the argument in the specified radix.
      * @see     java.lang.Character#MAX_RADIX
      * @see     java.lang.Character#MIN_RADIX
      */
-    public static String toString(int i, int radix) {
+    public static String toString(int i, int radix) { // 以第二个参数指定的基数（进制）返回第一个参数的字符串类型
         if (radix < Character.MIN_RADIX || radix > Character.MAX_RADIX)
             radix = 10;
 
@@ -397,10 +397,10 @@ public final class Integer extends Number implements Comparable<Integer> {
     public static String toString(int i) {
         if (i == Integer.MIN_VALUE)
             return "-2147483648";
-        int size = (i < 0) ? stringSize(-i) + 1 : stringSize(i);
+        int size = (i < 0) ? stringSize(-i) + 1 : stringSize(i);  // 预算字符串的长度
         char[] buf = new char[size];
-        getChars(i, size, buf);
-        return new String(buf, true);
+        getChars(i, size, buf);  // 将int每一位存入char数组
+        return new String(buf, true); // 通过char[]创建String
     }
 
     /**
@@ -430,7 +430,7 @@ public final class Integer extends Number implements Comparable<Integer> {
      *
      * Will fail if i == Integer.MIN_VALUE
      */
-    static void getChars(int i, int index, char[] buf) {
+    static void getChars(int i, int index, char[] buf) { // 获取char数组
         int q, r;
         int charPos = index;
         char sign = 0;
@@ -468,9 +468,9 @@ public final class Integer extends Number implements Comparable<Integer> {
                                       99999999, 999999999, Integer.MAX_VALUE };
 
     // Requires positive x
-    static int stringSize(int x) {
+    static int stringSize(int x) { // 计算整数长度
         for (int i=0; ; i++)
-            if (x <= sizeTable[i])
+            if (x <= sizeTable[i]) // 很巧妙，通过整型大小确定整型长度
                 return i+1;
     }
 
@@ -522,16 +522,16 @@ public final class Integer extends Number implements Comparable<Integer> {
      * </pre></blockquote>
      *
      * @param      s   the {@code String} containing the integer
-     *                  representation to be parsed
+     *                  representation to be parsed 要转换的字符串
      * @param      radix   the radix to be used while parsing {@code s}.
      * @return     the integer represented by the string argument in the
-     *             specified radix.
+     *             specified radix. 要在整型表示中使用的基数(进制)，默认10进制
      * @exception  NumberFormatException if the {@code String}
      *             does not contain a parsable {@code int}.
      */
     public static int parseInt(String s, int radix)
                 throws NumberFormatException
-    {
+    { // 以第二个参数指定的基数（进制）返回第一个参数的INT类型
         /*
          * WARNING: This method may be invoked early during VM initialization
          * before IntegerCache is initialized. Care must be taken to not use
@@ -572,7 +572,7 @@ public final class Integer extends Number implements Comparable<Integer> {
                     throw NumberFormatException.forInputString(s);
                 i++;
             }
-            multmin = limit / radix;
+            multmin = limit / radix; // 处理越界问题
             while (i < len) {
                 // Accumulating negatively avoids surprises near MAX_VALUE
                 digit = Character.digit(s.charAt(i++),radix);
@@ -776,7 +776,6 @@ public final class Integer extends Number implements Comparable<Integer> {
      * may be set and saved in the private system properties in the
      * sun.misc.VM class.
      */
-
     private static class IntegerCache {
         static final int low = -128;
         static final int high;
@@ -789,7 +788,7 @@ public final class Integer extends Number implements Comparable<Integer> {
                 sun.misc.VM.getSavedProperty("java.lang.Integer.IntegerCache.high");
             if (integerCacheHighPropValue != null) {
                 try {
-                    int i = parseInt(integerCacheHighPropValue);
+                    int i = parseInt(integerCacheHighPropValue); // high 的取值范围[127, Integer.MAX_VALUE - 128 -1]
                     i = Math.max(i, 127);
                     // Maximum array size is Integer.MAX_VALUE
                     h = Math.min(i, Integer.MAX_VALUE - (-low) -1);
@@ -799,12 +798,12 @@ public final class Integer extends Number implements Comparable<Integer> {
             }
             high = h;
 
-            cache = new Integer[(high - low) + 1];
+            cache = new Integer[(high - low) + 1]; // cache 赋值
             int j = low;
             for(int k = 0; k < cache.length; k++)
                 cache[k] = new Integer(j++);
 
-            // range [-128, 127] must be interned (JLS7 5.1.7)
+            // range [-128, 127] must be interned (JLS7 5.1.7) 必须保留
             assert IntegerCache.high >= 127;
         }
 

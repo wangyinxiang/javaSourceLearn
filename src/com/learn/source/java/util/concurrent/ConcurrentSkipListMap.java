@@ -563,9 +563,9 @@ public class ConcurrentSkipListMap<K,V> extends AbstractMap<K,V>
      * shared abstract class.
      */
     static class Index<K,V> {
-        final Node<K,V> node;
-        final Index<K,V> down;
-        volatile Index<K,V> right;
+        final Node<K,V> node; // 索引Node
+        final Index<K,V> down; // 指向下层
+        volatile Index<K,V> right; // 指向下一个Index
 
         /**
          * Creates index node with given values.
@@ -635,9 +635,9 @@ public class ConcurrentSkipListMap<K,V> extends AbstractMap<K,V>
 
     /**
      * Nodes heading each level keep track of their level.
-     */
+     */ // HeadIndex内部就一个level来定义层级
     static final class HeadIndex<K,V> extends Index<K,V> {
-        final int level;
+        final int level; // //索引层，从1开始，Node单链表层为0
         HeadIndex(Node<K,V> node, Index<K,V> down, Index<K,V> right, int level) {
             super(node, down, right);
             this.level = level;
@@ -664,28 +664,28 @@ public class ConcurrentSkipListMap<K,V> extends AbstractMap<K,V>
      * rely on this side-effect of clearing indices to deleted nodes.
      * @param key the key
      * @return a predecessor of key
-     */
+     */ // 确认key要插入的位置
     private Node<K,V> findPredecessor(Object key, Comparator<? super K> cmp) {
         if (key == null)
             throw new NullPointerException(); // don't postpone errors
         for (;;) {
-            for (Index<K,V> q = head, r = q.right, d;;) {
-                if (r != null) {
-                    Node<K,V> n = r.node;
+            for (Index<K,V> q = head, r = q.right, d;;) { // 从head节点开始，head是level最高级别的headIndex
+                if (r != null) { // 表示该节点右边还有节点，需要比较
+                    Node<K, V> n = r.node;
                     K k = n.key;
-                    if (n.value == null) {
-                        if (!q.unlink(r))
+                    if (n.value == null) { // 表示该节点已经被删除了,通过unlink()方法过滤掉该节点
+                        if (!q.unlink(r)) //  删掉r节点
                             break;           // restart
                         r = q.right;         // reread r
                         continue;
                     }
-                    if (cpr(cmp, key, k) > 0) {
+                    if (cpr(cmp, key, k) > 0) { // 如果key 大于r节点的key 则往前进一步
                         q = r;
                         r = r.right;
                         continue;
                     }
                 }
-                if ((d = q.down) == null)
+                if ((d = q.down) == null) // 到达最右边，如果dowm == null，表示指针已经达到最下层了，直接返回该节点
                     return q.node;
                 q = d;
                 r = d.right;
@@ -820,24 +820,24 @@ public class ConcurrentSkipListMap<K,V> extends AbstractMap<K,V>
             throw new NullPointerException();
         Comparator<? super K> cmp = comparator;
         outer: for (;;) {
-            for (Node<K,V> b = findPredecessor(key, cmp), n = b.next;;) {
-                if (n != null) {
+            for (Node<K,V> b = findPredecessor(key, cmp), n = b.next;;) { // 确认key要插入的位置
+                if (n != null) { // 前辈节点的next != null
                     Object v; int c;
                     Node<K,V> f = n.next;
-                    if (n != b.next)               // inconsistent read
+                    if (n != b.next)               // inconsistent read // 不一致读，主要原因是并发，有节点捷足先登
                         break;
-                    if ((v = n.value) == null) {   // n is deleted
+                    if ((v = n.value) == null) {   // n is deleted 该节点已经被删除了
                         n.helpDelete(b, f);
                         break;
                     }
-                    if (b.value == null || v == n) // b is deleted
+                    if (b.value == null || v == n) // b is deleted 前辈节点b已经被删除
                         break;
-                    if ((c = cpr(cmp, key, n.key)) > 0) {
+                    if ((c = cpr(cmp, key, n.key)) > 0) { // 节点大于，往前移
                         b = n;
                         n = f;
                         continue;
                     }
-                    if (c == 0) {
+                    if (c == 0) { // 找到一个key相等的节点，根据onlyIfAbsent参数来做判断
                         if (onlyIfAbsent || n.casValue(v, value)) {
                             @SuppressWarnings("unchecked") V vv = (V)v;
                             return vv;
@@ -847,7 +847,7 @@ public class ConcurrentSkipListMap<K,V> extends AbstractMap<K,V>
                     // else c < 0; fall through
                 }
 
-                z = new Node<K,V>(key, value, n);
+                z = new Node<K,V>(key, value, n); // 将key-value包装成一个node，插入
                 if (!b.casNext(n, z))
                     break;         // restart if lost race to append to b
                 break outer;
@@ -857,11 +857,11 @@ public class ConcurrentSkipListMap<K,V> extends AbstractMap<K,V>
         int rnd = ThreadLocalRandom.nextSecondarySeed();
         if ((rnd & 0x80000001) == 0) { // test highest and lowest bits
             int level = 1, max;
-            while (((rnd >>>= 1) & 1) != 0)
+            while (((rnd >>>= 1) & 1) != 0) // 抛硬币决定层次
                 ++level;
             Index<K,V> idx = null;
             HeadIndex<K,V> h = head;
-            if (level <= (max = h.level)) {
+            if (level <= (max = h.level)) { // 如果决定的层次level比最高层次head.level小，直接生成最高层次的index.由于需要确认每一层次的down，所以需要从最下层依次往上生成
                 for (int i = 1; i <= level; ++i)
                     idx = new Index<K,V>(z, idx, null);
             }

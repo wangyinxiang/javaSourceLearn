@@ -116,7 +116,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
      * @param newValue the new value
      * @return the previous value
      */
-    public final int getAndSet(int newValue) {
+    public final int getAndSet(int newValue) { // 获取旧值，然后原子赋值
         return unsafe.getAndSetInt(this, valueOffset, newValue);
     }
 
@@ -129,7 +129,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
      * @return {@code true} if successful. False return indicates that
      * the actual value was not equal to the expected value.
      */
-    public final boolean compareAndSet(int expect, int update) {
+    public final boolean compareAndSet(int expect, int update) { // 比较再更新（原子更新）
         return unsafe.compareAndSwapInt(this, valueOffset, expect, update);
     }
 
@@ -145,7 +145,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
      * @param update the new value
      * @return {@code true} if successful
      */
-    public final boolean weakCompareAndSet(int expect, int update) {
+    public final boolean weakCompareAndSet(int expect, int update) { // 可能失败，并且不能保证顺序，只有极少情况才是compareAndSet的合适替代品
         return unsafe.compareAndSwapInt(this, valueOffset, expect, update);
     }
 
@@ -154,7 +154,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
      *
      * @return the previous value
      */
-    public final int getAndIncrement() {
+    public final int getAndIncrement() { // 原子方式当前值+1，并返回修改前的值
         return unsafe.getAndAddInt(this, valueOffset, 1);
     }
 
@@ -163,7 +163,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
      *
      * @return the previous value
      */
-    public final int getAndDecrement() {
+    public final int getAndDecrement() { // 原子方式当前值-1，并返回修改前的值
         return unsafe.getAndAddInt(this, valueOffset, -1);
     }
 
@@ -173,7 +173,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
      * @param delta the value to add
      * @return the previous value
      */
-    public final int getAndAdd(int delta) {
+    public final int getAndAdd(int delta) { // 原子方式当前值+N，并返回修改前的值
         return unsafe.getAndAddInt(this, valueOffset, delta);
     }
 
@@ -182,7 +182,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
      *
      * @return the updated value
      */
-    public final int incrementAndGet() {
+    public final int incrementAndGet() { // 原子方式当前值-N，并返回修改前的值
         return unsafe.getAndAddInt(this, valueOffset, 1) + 1;
     }
 
@@ -191,7 +191,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
      *
      * @return the updated value
      */
-    public final int decrementAndGet() {
+    public final int decrementAndGet() { // 原子方式当前值+1，并返回修改后的值
         return unsafe.getAndAddInt(this, valueOffset, -1) - 1;
     }
 
@@ -201,7 +201,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
      * @param delta the value to add
      * @return the updated value
      */
-    public final int addAndGet(int delta) {
+    public final int addAndGet(int delta) { // 原子方式当前值+N，并返回修改后的值
         return unsafe.getAndAddInt(this, valueOffset, delta) + delta;
     }
 
@@ -215,7 +215,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
      * @return the previous value
      * @since 1.8
      */
-    public final int getAndUpdate(IntUnaryOperator updateFunction) {
+    public final int getAndUpdate(IntUnaryOperator updateFunction) { // 用给定函数的结果以原子方式更新当前值，返回更新前的值。
         int prev, next;
         do {
             prev = get();
@@ -234,7 +234,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
      * @return the updated value
      * @since 1.8
      */
-    public final int updateAndGet(IntUnaryOperator updateFunction) {
+    public final int updateAndGet(IntUnaryOperator updateFunction) { // 用给定函数的结果以原子方式更新当前值，返回更新后的值。
         int prev, next;
         do {
             prev = get();
@@ -258,7 +258,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
      * @since 1.8
      */
     public final int getAndAccumulate(int x,
-                                      IntBinaryOperator accumulatorFunction) {
+                                      IntBinaryOperator accumulatorFunction) { // 使用对当前值和给定函数的结果以原子方式更新当前值，返回更新前的值。
         int prev, next;
         do {
             prev = get();

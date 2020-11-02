@@ -181,10 +181,10 @@ public class ScheduledThreadPoolExecutor
             extends FutureTask<V> implements RunnableScheduledFuture<V> {
 
         /** Sequence number to break ties FIFO */
-        private final long sequenceNumber;
+        private final long sequenceNumber; // 任务被添加到ScheduledThreadPoolExecutor中的序号
 
         /** The time the task is enabled to execute in nanoTime units */
-        private long time;
+        private long time; // 任务要执行的具体时间
 
         /**
          * Period in nanoseconds for repeating tasks.  A positive
@@ -192,7 +192,7 @@ public class ScheduledThreadPoolExecutor
          * indicates fixed-delay execution.  A value of 0 indicates a
          * non-repeating task.
          */
-        private final long period;
+        private final long period; // 任务的间隔周期
 
         /** The actual task to be re-enqueued by reExecutePeriodic */
         RunnableScheduledFuture<V> outerTask = this;
@@ -286,14 +286,14 @@ public class ScheduledThreadPoolExecutor
          * Overrides FutureTask version so as to reset/requeue if periodic.
          */
         public void run() {
-            boolean periodic = isPeriodic();
-            if (!canRunInCurrentRunState(periodic))
+            boolean periodic = isPeriodic(); // 获取该线程是否为周期性任务标志
+            if (!canRunInCurrentRunState(periodic)) // 该线程是否可以执行
                 cancel(false);
             else if (!periodic)
-                ScheduledFutureTask.super.run();
-            else if (ScheduledFutureTask.super.runAndReset()) {
-                setNextRunTime();
-                reExecutePeriodic(outerTask);
+                ScheduledFutureTask.super.run(); // 运行
+            else if (ScheduledFutureTask.super.runAndReset()) { // 运行并重置
+                setNextRunTime(); // 任务下次的执行时间
+                reExecutePeriodic(outerTask); // 重新把任务添加到队列中，让该任务可以重复执行
             }
         }
     }

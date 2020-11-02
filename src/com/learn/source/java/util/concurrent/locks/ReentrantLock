@@ -1,0 +1,43 @@
+/*
+ * 一个可重入互斥{@link lock}锁，其基本行为和语义与使用{@code synchronized}方法和语句访问的隐式监视器锁相同，但具有一定的扩展功能。
+ *
+ * ReentrantLock由线程最后一次成功锁定但尚未解锁它的对象拥有，一个线程调用锁时，当锁没有被另一个线程持有，将会立即返回并成功获取到锁。
+ * 可以使用方法检查这一点{@link #isHeldByCurrentThread} and {@link #getHoldCount}.
+ *
+ * 此类的构造函数接受可选的公平性/非公平性参数。当设置为true时，在竞争条件下，锁倾向于最长等待线程的访问权。否则，此锁不能保证任何特定的访问顺序。
+ * 使用由多个线程访问的公平锁的程序可能会表现出比使用默认设置的程序更低的总吞吐量（即，速度较慢；通常慢得多），但在获取锁并保证不会出现饥饿的时间上差不多。
+ * 但是请注意，锁的公平性并不保证线程调度的公平性。因此，使用公平锁的多个线程中的一个可能连续多次获得该锁，而其他活动线程则可能没有获得过。
+ * 还请注意，非定时的tryLock()方法不支持公平性设置。如果锁可获得，即使其他线程正在等待，它也会成功。
+ *
+ * 最佳实践：
+ * class X {
+ *   private final ReentrantLock lock = new ReentrantLock();
+ *   // ...
+ *
+ *   public void m() {
+ *     lock.lock();  // block until condition holds
+ *     try {
+ *       // ... method body
+ *     } finally {
+ *       lock.unlock()
+ *     }
+ *   }
+ * }}
+ *
+ * 除了实现Lock接口之外，这个类还定义了许多public和protected方法来检查锁的状态。其中一些方法只对机器和监控有用。
+ *
+ * 此类的序列化与内置锁的行为方式相同：反序列化的锁处于解锁状态，而不管其序列化时的状态如何。
+ *
+ * 同一线程最多支持2147483647个递归锁。尝试超过此限制将导致从锁的方法抛出Error。
+ */
+
+ ReentrantLock 与 synchronized 的区别：
+ 1. 与 synchronized 相比，ReentrantLock提供了更多，更加全面的功能，具备更强的扩展性。例如：时间锁等候，可中断锁等候，锁投票。
+ 2. ReentrantLock 还提供了条件 Condition ，对线程的等待、唤醒操作更加详细和灵活，
+ 所以在多个条件变量和高度竞争锁的地方，ReentrantLock 更加适合（以后会阐述Condition）。
+ 3. ReentrantLock 提供了可轮询的锁请求。它会尝试着去获取锁，如果成功则继续，
+ 否则可以等到下次运行时处理，而 synchronized 则一旦进入锁请求要么成功要么阻塞，
+ 所以相比 synchronized 而言，ReentrantLock会不容易产生死锁些。
+ 4. ReentrantLock 支持更加灵活的同步代码块，但是使用 synchronized 时，
+ 只能在同一个 synchronized 块结构中获取和释放。注意，ReentrantLock的锁释放一定要在finally中处理，否则可能会产生严重的后果。
+ 5. ReentrantLock 支持中断处理，且性能较 synchronized 会好些

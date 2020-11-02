@@ -103,9 +103,7 @@ import java.util.Arrays;
      * A cache of the last value returned by toString. Cleared
      * whenever the StringBuffer is modified.
      */
-    // 用来缓存数据的,每当对value操作之前都需要把toStringCache数据清除
-    // 变量解释:返回最后一次toString的缓存值，一旦StringBuffer被修改就清除这个缓存值。
-    private transient char[] toStringCache;
+    private transient char[] toStringCache; // 用来缓存数据的,每当对value操作之前都需要把toStringCache数据清除
 
     /** use serialVersionUID from JDK 1.0.2 for interoperability */
     static final long serialVersionUID = 3388685877147921107L;

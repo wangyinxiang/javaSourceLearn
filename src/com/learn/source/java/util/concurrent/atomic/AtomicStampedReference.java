@@ -67,8 +67,8 @@ public class AtomicStampedReference<V> {
      * Creates a new {@code AtomicStampedReference} with the given
      * initial values.
      *
-     * @param initialRef the initial reference
-     * @param initialStamp the initial stamp
+     * @param initialRef the initial reference  初始引用
+     * @param initialStamp the initial stamp 初始版本号
      */
     public AtomicStampedReference(V initialRef, int initialStamp) {
         pair = Pair.of(initialRef, initialStamp);
@@ -142,10 +142,10 @@ public class AtomicStampedReference<V> {
      * @param newStamp the new value for the stamp
      * @return {@code true} if successful
      */
-    public boolean compareAndSet(V   expectedReference,
-                                 V   newReference,
-                                 int expectedStamp,
-                                 int newStamp) {
+    public boolean compareAndSet(V   expectedReference, // 旧引用（值）
+                                 V   newReference, // 修改后的引用（值）
+                                 int expectedStamp, // 旧版本号
+                                 int newStamp) { // 新版本号
         Pair<V> current = pair;
         return
             expectedReference == current.reference &&

@@ -80,8 +80,7 @@ import sun.reflect.Reflection;
  */
 public class DriverManager {
 
-    //已经注册的驱动列表
-    // List of registered JDBC drivers
+    // List of registered JDBC drivers 已经注册的驱动列表
     private final static CopyOnWriteArrayList<DriverInfo> registeredDrivers = new CopyOnWriteArrayList<>();
     private static volatile int loginTimeout = 0;
     private static volatile java.io.PrintWriter logWriter = null;
@@ -90,18 +89,15 @@ public class DriverManager {
     private final static  Object logSync = new Object();
 
     /* Prevent the DriverManager class from being instantiated. */
-    // 阻止被初始化，DriverManager里面都是静态的方法
-    private DriverManager(){}
+    private DriverManager(){} // 阻止被初始化，DriverManager里面都是静态的方法
 
 
     /**
      * Load the initial JDBC drivers by checking the System property
      * jdbc.properties and then use the {@code ServiceLoader} mechanism
      */
-    //初始化加载驱动，其中用到了ServiceLoader机制
-    static {
-        //初始化加载驱动
-        loadInitialDrivers();
+    static { //初始化加载驱动，其中用到了ServiceLoader机制
+        loadInitialDrivers();   //初始化加载驱动
         println("JDBC DriverManager initialized");
     }
 
@@ -284,10 +280,9 @@ public class DriverManager {
      * that can connect to the given URL
      * @exception SQLException if a database access error occurs
      */
-    // 通过url获取driver
     @CallerSensitive
     public static Driver getDriver(String url)
-        throws SQLException {
+        throws SQLException { // 通过url获取driver
 
         println("DriverManager.getDriver(\"" + url + "\")");
 
@@ -295,12 +290,10 @@ public class DriverManager {
 
         // Walk through the loaded registeredDrivers attempting to locate someone
         // who understands the given URL.
-        // 通过遍历registeredDrivers中每个驱动
-        for (DriverInfo aDriver : registeredDrivers) {
+        for (DriverInfo aDriver : registeredDrivers) { // 通过遍历registeredDrivers中每个驱动
             // If the caller does not have permission to load the driver then
             // skip it.
-            // acceptsURL（）方法判断url是否符合driver
-            if(isDriverAllowed(aDriver.driver, callerClass)) {
+            if(isDriverAllowed(aDriver.driver, callerClass)) { // acceptsURL（）方法判断url是否符合driver
                 try {
                     if(aDriver.driver.acceptsURL(url)) {
                         // Success!
@@ -334,10 +327,8 @@ public class DriverManager {
      * @exception SQLException if a database access error occurs
      * @exception NullPointerException if {@code driver} is null
      */
-    // 注册驱动的方法
     public static synchronized void registerDriver(java.sql.Driver driver)
-        throws SQLException {
-
+        throws SQLException {  // 注册驱动的方法
         registerDriver(driver, null);
     }
 
@@ -397,10 +388,9 @@ public class DriverManager {
      *
      * @see SecurityManager#checkPermission
      */
-    // 注销driver方法
     @CallerSensitive
     public static synchronized void deregisterDriver(Driver driver)
-        throws SQLException {
+        throws SQLException { // 注销driver方法
         if (driver == null) {
             return;
         }
@@ -637,9 +627,8 @@ public class DriverManager {
 
 
     //  Worker method called by the public getConnection() methods.
-    // 内部真正工作的方法(私有)
     private static Connection getConnection(
-        String url, java.util.Properties info, Class<?> caller) throws SQLException {
+        String url, java.util.Properties info, Class<?> caller) throws SQLException {  // 内部真正工作的方法(私有)
         /*
          * When callerCl is null, we should check the application's
          * (which is invoking this class indirectly)
@@ -663,17 +652,13 @@ public class DriverManager {
         // Walk through the loaded registeredDrivers attempting to make a connection.
         // Remember the first exception that gets raised so we can reraise it.
         SQLException reason = null;
-        //遍历registeredDrivers去获得正确的connection
-        for(DriverInfo aDriver : registeredDrivers) {
+        for(DriverInfo aDriver : registeredDrivers) { //遍历registeredDrivers去获得正确的connection
             // If the caller does not have permission to load the driver then
             // skip it.
-            // 如果callerCL不允许读取驱动，就会跳过
-            if(isDriverAllowed(aDriver.driver, callerCL)) {
+            if(isDriverAllowed(aDriver.driver, callerCL)) { // 如果callerCL不允许读取驱动，就会跳过
                 try {
                     println("    trying " + aDriver.driver.getClass().getName());
-                    //真正的获取connection的方法，其实还是通过driver接口中的connect方法
-                    //和数据库服务器建立TCP长连接
-                    Connection con = aDriver.driver.connect(url, info);
+                    Connection con = aDriver.driver.connect(url, info); //真正的获取connection的方法，其实还是通过driver接口中的connect方法 和数据库服务器建立TCP长连接
                     if (con != null) {
                         // Success!
                         println("getConnection returning " + aDriver.driver.getClass().getName());

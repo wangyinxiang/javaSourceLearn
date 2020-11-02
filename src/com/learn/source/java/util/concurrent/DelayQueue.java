@@ -66,7 +66,7 @@ import java.util.*;
  * @since 1.5
  * @author Doug Lea
  * @param <E> the type of elements held in this collection
- */
+ */ // 支持延时获取元素的无界阻塞队列
 public class DelayQueue<E extends Delayed> extends AbstractQueue<E>
     implements BlockingQueue<E> {
 

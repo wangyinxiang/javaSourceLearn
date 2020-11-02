@@ -117,7 +117,7 @@ import sun.misc.Unsafe;
  *   }
  * }}</pre>
  */
-public class LockSupport {
+public class LockSupport { // LockSupport 为 J.U.C 提供的一个阻塞和唤醒的工具类，而LockSupport并不需要获取对象的监视器。LockSupport机制是每次unpark给线程1个“许可”——最多只能是1，而park则相反，如果当前 线程有许可，那么park方法会消耗1个并返回，否则会阻塞线程直到线程重新获得许可，在线程启动之前调用park/unpark方法没有任何效果
     private LockSupport() {} // Cannot be instantiated.
 
     private static void setBlocker(Thread t, Object arg) {
@@ -136,7 +136,7 @@ public class LockSupport {
      * @param thread the thread to unpark, or {@code null}, in which case
      *        this operation has no effect
      */
-    public static void unpark(Thread thread) {
+    public static void unpark(Thread thread) { // 给线程1个“许可”——最多只能是1， 如果线程非阻塞重复调用没有任何效果
         if (thread != null)
             UNSAFE.unpark(thread);
     }
@@ -169,9 +169,9 @@ public class LockSupport {
      *        thread parking
      * @since 1.6
      */
-    public static void park(Object blocker) {
+    public static void park(Object blocker) { // 消耗1个许可，阻塞
         Thread t = Thread.currentThread();
-        setBlocker(t, blocker);
+        setBlocker(t, blocker); // blocker参数，主要是用来标识当前线程在等待的对象，该对象主要用于问题排查和系统监控。
         UNSAFE.park(false, 0L);
         setBlocker(t, null);
     }
@@ -208,7 +208,7 @@ public class LockSupport {
      * @param nanos the maximum number of nanoseconds to wait
      * @since 1.6
      */
-    public static void parkNanos(Object blocker, long nanos) {
+    public static void parkNanos(Object blocker, long nanos) { // 阻塞nanos纳秒
         if (nanos > 0) {
             Thread t = Thread.currentThread();
             setBlocker(t, blocker);

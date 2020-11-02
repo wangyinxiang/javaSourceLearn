@@ -76,7 +76,7 @@ import java.util.function.Consumer;
  * @since 1.5
  * @author Doug Lea
  * @param <E> the type of elements held in this collection
- */
+ */ // LinkedBlockingDeque则是一个由链表组成的双向阻塞队列，双向队列就意味着可以从对头、对尾两端插入和移除元素，同样意味着LinkedBlockingDeque支持FIFO、FILO两种操作方式
 public class LinkedBlockingQueue<E> extends AbstractQueue<E>
         implements BlockingQueue<E>, java.io.Serializable {
     private static final long serialVersionUID = -6903933977591709194L;
@@ -120,7 +120,7 @@ public class LinkedBlockingQueue<E> extends AbstractQueue<E>
      * Linked list node class
      */
     static class Node<E> {
-        E item;
+        E item; // 元素
 
         /**
          * One of:
@@ -128,28 +128,28 @@ public class LinkedBlockingQueue<E> extends AbstractQueue<E>
          * - this Node, meaning the successor is head.next
          * - null, meaning there is no successor (this is the last node)
          */
-        Node<E> next;
+        Node<E> next; // 后继next
 
         Node(E x) { item = x; }
     }
 
     /** The capacity bound, or Integer.MAX_VALUE if none */
-    private final int capacity;
+    private final int capacity;  // 容量，在创建LinkedBlockingDeque时指定的
 
     /** Current number of elements */
-    private final AtomicInteger count = new AtomicInteger();
+    private final AtomicInteger count = new AtomicInteger(); // 大小，双向链表中当前节点个数
 
     /**
      * Head of linked list.
      * Invariant: head.item == null
      */
-    transient Node<E> head;
+    transient Node<E> head; // 双向链表的表头
 
     /**
      * Tail of linked list.
      * Invariant: last.next == null
      */
-    private transient Node<E> last;
+    private transient Node<E> last; // 双向链表的表尾
 
     /** Lock held by take, poll, etc */
     private final ReentrantLock takeLock = new ReentrantLock();

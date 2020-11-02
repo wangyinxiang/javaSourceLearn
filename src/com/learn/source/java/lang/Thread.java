@@ -942,8 +942,8 @@ class Thread implements Runnable {
      *          <code>false</code> otherwise.
      * @see #isInterrupted()
      * @revised 6.0
-     */
-    public static boolean interrupted() {
+     */ // 如果这个方法被连续调用两次，第二次调用将返回false
+    public static boolean interrupted() { // 当前线程是否被中断，此方法清除线程的中断状态。
         return currentThread().isInterrupted(true);
     }
 
@@ -960,7 +960,7 @@ class Thread implements Runnable {
      * @see     #interrupted()
      * @revised 6.0
      */
-    public boolean isInterrupted() {
+    public boolean isInterrupted() { // 当前线程是否被中断，此方法不会清除线程的中断状态。
         return isInterrupted(false);
     }
 

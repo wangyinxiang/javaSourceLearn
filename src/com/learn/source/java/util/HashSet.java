@@ -217,8 +217,7 @@ public class HashSet<E>
      * element
      */
     public boolean add(E e) {
-        // PRESENT 用于map存储的虚拟value
-        return map.put(e, PRESENT)==null;
+        return map.put(e, PRESENT)==null; // PRESENT 用于map存储的虚拟value
     }
 
     /**

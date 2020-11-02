@@ -118,11 +118,9 @@ public class TreeMap<K,V>
      *
      * @serial
      */
-    // 用于维护此TreeMap中的顺序的比较器，如果使用其键的自然顺序，则为null
-    private final Comparator<? super K> comparator;
+    private final Comparator<? super K> comparator;  // 用于维护此TreeMap中的顺序的比较器，如果使用其键的自然顺序，则为null
 
-    // 树的根节点
-    private transient Entry<K,V> root;
+    private transient Entry<K,V> root; // 树的根节点
 
     /**
      * The number of entries in the tree

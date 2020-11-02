@@ -7,5 +7,10 @@ public class TestString {
         s.substring(0,1);
         s.indexOf("w");
         s.split("i");
+        s.hashCode();
+
+
+        String c = "20201015";
+        System.out.println(Integer.parseInt(c) < 20201016);
     }
 }

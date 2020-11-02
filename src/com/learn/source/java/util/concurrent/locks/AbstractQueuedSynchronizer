@@ -1,0 +1,211 @@
+-- AQS
+/*
+ * 用于实现基于先进先出（FIFO）等待队列的阻塞锁和相关同步器（信号量、事件等）提供的框架。
+ * 这个类被设计成大多数依赖单个原子int值来表示状态同步器的基础。
+ * 子类必须定义protected的方法来改变这个state值，并定义该state对于获取或释放此对象分别表示什么。
+ * 考虑到这些，这个类中的其他方法执行所有的排队和阻塞机制。子类可以维护其state字段，
+ * 但是只有使用getState/setState/compareAndSetState方法进行原子操作更新的int值才与同步有关。
+ *
+ * 子类应定义为非公共的内部类，用于实现其内部类的同步属性。类AbstractQueuedSynchronizer不实现任何同步接口。
+ * 相反，它定义了诸如acquireInterruptible这样的方法，可以由具体的锁和相关的同步器调用来实现它们的公共方法。
+ *
+ * 此类支持默认的<独占>模式和<共享>模式中的一种或两者。
+ * 在独占模式下获取时，其他线程尝试的获取无法成功。共享模式下，由多个线程获取锁可能（但不一定）成功。
+ * 此类不理解这些差异，只是机械地认为，共享模式当一个线程获取成功时，下一个等待线程（如果存在）也必须确定它是否也可以获取。
+ * 通常，实现子类只支持其中一种模式，但也有两种模式都可以发挥作用的，例如在ReadWriteLock中。
+ * 只支持独占模式或只支持共享模式的子类不需要定义未使用模式的方法。
+ *
+ * 这个类定义了一个嵌套的ConditionObject类可以作为Condition子类支持独占模式的实现，
+ * 其中isHeldExclusively方法表示是否对当前线程独占保持同步。
+ * 使用getState方法获取的当前值，调用的release方法将会完全释放此对象和acquire设定的状态值，最终将此对象恢复到获取前的状态。
+ * AbstractQueuedSynchronizer方法不会创建这样的条件，因此如果不能满足此约束，请不要使用它。
+ * ConditionObject的行为当然取决于其同步器实现的语义。
+ *
+ * 此类为内部队列提供检查、检测和监控方法，以及条件对象的类似方法。
+ * 可以根据需要使用AbstractQueuedSynchronizer将它们加入到类中，以实现它们的同步机制。
+ *
+ * 此类的序列化只存储底层的原子整数维护状态，因此反序列化的对象具有空线程队列。
+ * 需要序列化的子类定义一个readObject方法，该方法在反序列化时会将其恢复到已知的初始状态。
+ *
+ * <使用>
+ * 若要将此类用作同步器的基础，请通过使用#getState、#setState和/或#compareAndSetState检查和/或修改同步状态，重新定义以下方法（如果适用）：
+ * tryAcquire
+ * tryRelease
+ * tryAcquireShared
+ * tryReleaseShared
+ * isHeldExclusively
+ *
+ * 默认情况下，这些方法中的每一个都会抛出UnsupportedOperationException异常。
+ * 这些方法的实现必须是内部线程安全的，并且通常应该很短且不阻塞。
+ * 定义的这些方法是使用此类唯一受支持的方法。所有其他方法都被声明为final，因为它们不能独立地改变。
+ *
+ * 你还可能发现从AbstractOwnableSynchronizer继承的方法对于跟踪拥有独占同步器的线程非常有用。
+ * 我们鼓励您使用它们——监视和诊断工具能够帮助用户确定哪些线程持有锁。
+ *
+ * 即使这个类内部是基于FIFO队列，它不会自动执行FIFO获取策略。独占同步的核心形式如下：
+ * Acquire:
+       while (!tryAcquire(arg)) {
+          <em>如果线程尚未排队，请将其排队</em>;
+          <em>可能阻塞当前线程</em>;
+       }
+
+   Release:
+       if (tryRelease(arg))
+          <em>解锁第一个排队线程</em>;
+ *
+ * （共享模式类似，但可能涉及级联信号。）
+ *  <p id=“barging”>由于获取时检查是在排队之前调用的，因此新获取的线程可能会在阻塞和排队的其他线程之前抢占锁。
+ * 但是，如果需要，您可以定义tryAcquire和/或tryAcquireShared，通过内部调用一个或多个检查方法来禁用“抢占”，从而提供一个公平的FIFO。
+ * 特别是，大多数公平的同步器可以定义tryAcquire，当hasQueuedPreprocessors（一种专门为公平同步器使用的方法）返回true时，则返回false。还可能有其他变化。
+ *
+ * 对于默认的抢占（也称为贪心、放弃和车队避让）策略，吞吐量和可伸缩性通常最高。
+ * 虽然这不能保证公平性或者没有饥饿，但是允许队列中较早排队的线程在后面的线程之前重新获取，并且每次重新获取对参与竞争的线程都是公平的机会。
+ * 此外，虽然acquire在通常意义上不旋转，但它们可能在阻塞之前多次调用tryAcquire()，并将其与其他计算相混合。
+ * 当短暂保持独占同步时，这就提供了旋转的大部分好处，而非独占同步时，则没有太大的负担。
+ * 如果需要，可以在调用acquire方法之前使用“快速路径”检查来增强这一点，只有在同步器可能无竞争时，才可能使用“hasConferred”和/或“hasQueuedThreads”预先检查。
+ *
+ * 此类为同步提供了一个高效和可伸缩的基础，它将其使用范围专门化到可以依赖整型state、acquire和release参数的同步器以及内部FIFO等待队列。
+ * 当这还不够时，可以使用java.util.concurrent.atomic并发原子类、您自定义的java.util.Queue类和LockSupport阻塞支持从较低级别构建同步器。
+ *
+ * <使用示例>
+ * 这是一个不可重入的互斥锁类，它使用值0表示解锁状态，而1表示锁定状态。
+ * 虽然不可重入锁并不严格要求记录当前的所有者线程，但这个类仍然这样做，以使更易于监视。它还支持条件并公开其中一种检测方法：
+ *
+ * class Mutex implements Lock, java.io.Serializable {
+ *
+ *   // Our internal helper class
+ *   private static class Sync extends AbstractQueuedSynchronizer {
+ *     // Reports whether in locked state
+ *     protected boolean isHeldExclusively() {
+ *       return getState() == 1;
+ *     }
+ *
+ *     // Acquires the lock if state is zero
+ *     public boolean tryAcquire(int acquires) {
+ *       assert acquires == 1; // Otherwise unused
+ *       if (compareAndSetState(0, 1)) {
+ *         setExclusiveOwnerThread(Thread.currentThread());
+ *         return true;
+ *       }
+ *       return false;
+ *     }
+ *
+ *     // Releases the lock by setting state to zero
+ *     protected boolean tryRelease(int releases) {
+ *       assert releases == 1; // Otherwise unused
+ *       if (getState() == 0) throw new IllegalMonitorStateException();
+ *       setExclusiveOwnerThread(null);
+ *       setState(0);
+ *       return true;
+ *     }
+ *
+ *     // Provides a Condition
+ *     Condition newCondition() {
+ *         return new ConditionObject();
+ *     }
+ *
+ *     // Deserializes properly
+ *     private void readObject(ObjectInputStream s)
+ *         throws IOException, ClassNotFoundException {
+ *       s.defaultReadObject();
+ *       setState(0); // reset to unlocked state
+ *     }
+ *   }
+ *
+ *   // The sync object does all the hard work. We just forward to it.
+ *   private final Sync sync = new Sync();
+ *
+ *   public void lock()                { sync.acquire(1); }
+ *   public boolean tryLock()          { return sync.tryAcquire(1); }
+ *   public void unlock()              { sync.release(1); }
+ *   public Condition newCondition()   { return sync.newCondition(); }
+ *   public boolean isLocked()         { return sync.isHeldExclusively(); }
+ *   public boolean hasQueuedThreads() { return sync.hasQueuedThreads(); }
+ *   public void lockInterruptibly() throws InterruptedException {
+ *     sync.acquireInterruptibly(1);
+ *   }
+ *   public boolean tryLock(long timeout, TimeUnit unit)
+ *       throws InterruptedException {
+ *     return sync.tryAcquireNanos(1, unit.toNanos(timeout));
+ *   }
+ * }}
+ *
+ * 这是一个闩锁类类似于java.util.concurrent.countdownlock，只不过它只需要一个信号就可以触发。
+ * 因为闩锁是非排他的，它使用共享的获取和释放方法。
+ *
+ * class BooleanLatch {
+ *
+ *   private static class Sync extends AbstractQueuedSynchronizer {
+ *     boolean isSignalled() { return getState() != 0; }
+ *
+ *     protected int tryAcquireShared(int ignore) {
+ *       return isSignalled() ? 1 : -1;
+ *     }
+ *
+ *     protected boolean tryReleaseShared(int ignore) {
+ *       setState(1);
+ *       return true;
+ *     }
+ *   }
+ *
+ *   private final Sync sync = new Sync();
+ *   public boolean isSignalled() { return sync.isSignalled(); }
+ *   public void signal()         { sync.releaseShared(1); }
+ *   public void await() throws InterruptedException {
+ *     sync.acquireSharedInterruptibly(1);
+ *   }
+ * }}
+ *
+ */
+
+ -- Node
+ /*
+  * 等待队列节点类
+  *
+  * 等待队列是“CLH”（Craig、Landin和Hagersten）锁队列的变体。CLH锁通常用于自旋锁。
+  * 我们使用它们来阻塞同步器，但是使用相同的基本策略，即在其节点的前一个线程中保存一些控制信息。
+  * 每个节点中的“status”字段跟踪线程是否应该阻塞。节点在其前置任务释放时会被通知。
+  * 队列的每个节点都充当一个特定的通知样式监视器，其中包含一个等待线程。但是，status字段不控制线程是否被授予锁等。
+  * 如果线程是队列中的第一个线程，它可能会尝试获取。但是，第一并不能保证成功，它只是提供竞争的权利。
+  * 所以当前释放的竞争者线程可能需要重新等待。
+  *
+  * 为了排队进入一个CLH锁，你需要进行原子拼接并把它作为一个新的尾部。要出队列，只需设置head字段。
+  *
+  *      +------+  prev +-----+       +-----+
+  * head |      | <---- |     | <---- |     |  tail
+  *      +------+       +-----+       +-----+
+  *
+  * 插入CLH队列只需要在尾部执行单个原子操作，因此有一个从未排队到进入队列的简单原子划分点。类似地，出队列只涉及更新“头部”。
+  * 然而，节点需要更多的工作来确定谁是它们的继承者，还有部分处理由于超时和中断而可能发生的取消。
+  *
+  * “prev”链接（在最初的CLH锁中没有使用），主要用于处理取消。如果节点被取消，其后续节点（通常）将重新链接到未取消的前置节点。
+  * 有关自旋锁的类似机制的解释，请参阅Scott和Scherer的论文http://www.cs.rochester.edu/u/scott/synchronization/。
+  *
+  * 我们还使用“next”链接来实现阻塞机制。
+  * 每个节点的线程id都保存在它自己的Node节点中，因此前置节点通过遍历下一个节点来确定它是哪个线程来通知它唤醒。
+  * 确定后继者必须避免与新排队的节点在设置其前置节点的“下一个”字段中竞争。
+  * 当一个节点的后继者显示为空时，可以通过从原子更新的尾节点向后检查来解决这个问题。
+  * （或者，换言之，下一个节点是一个好的优化，这样我们通常不需要反向扫描。）
+  *
+  * 介绍了一些基本的算法。当我们必须轮询其他节点的取消时，我们可能忽略了被取消的节点是在我们前面还是后面。
+  * 处理这一问题的办法是，在取消继承人时，总是不加区分，让他们稳定在一个新的前驱上，除非我们能确定一个未被取消的前驱承担这一责任。
+  *
+  * CLH队列需要一个虚拟头节点才能开始。但我们不会在结构体上自己创建它们，因为如果没有竞争的话，那将是浪费精力。相反，节点被构造成竞争。
+  *
+  * 等待线程使用相同的节点，但使用额外的链接。条件只需要链接到简单（非并发）链接队列中的节点，因为它们只有在独占时才被访问。
+  * 等待时，将节点插入条件队列。收到信号后，节点被转移到主队列。status字段的一个特殊值用于标记节点所在的队列。
+  */
+
+-- waitStatus
+/*
+ * 状态字段，仅采用以下值：
+ *   SIGNAL:    此节点的后续节点已被（或即将被）阻塞（通过park），因此当前节点在释放或取消时必须断开其后续节点的链接。
+ *              为了避免竞争，acquire方法必须首先声明它们需要一个信号，然后重新原子获取，然后在失败时阻塞。
+ *   CANCELLED: 由于超时或中断，此节点被取消。节点永远不会丢弃此状态。特别是，具有取消节点的线程永远不会再阻塞。
+ *   CONDITION：此节点当前位于条件队列中。在传输之前，它不会用作同步队列节点，此时状态将设置为0。（此处使用此值与字段的其他用途无关，但简化了机制。）
+ *   PROPAGATE：共享锁释放应该传播到其他节点。这是在doReleaseShared中设置的（仅适用于头节点），以确保传播继续进行，即使此后有其他操作介入。
+ *   0:         以上都不是
+ *
+ *  数值以数字方式排列以简化使用。非负值表示节点不需要发出信号。所以，大多数代码不需要检查特定的值，只需要检查符号。
+ *  对于普通同步节点，字段初始化为0，对于条件节点初始化为CONDITION。它是用CAS修改的（或者在可能的情况下，无条件的易失性写入）。
+ */

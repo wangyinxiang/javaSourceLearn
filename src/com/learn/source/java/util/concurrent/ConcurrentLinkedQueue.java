@@ -178,14 +178,14 @@ public class ConcurrentLinkedQueue<E> extends AbstractQueue<E>
      */
 
     private static class Node<E> {
-        volatile E item;
-        volatile Node<E> next;
+        volatile E item; // 节点元素
+        volatile Node<E> next; // 指向下一个节点的next引用
 
         /**
          * Constructs a new node.  Uses relaxed write because item can
          * only be seen after publication via casNext.
          */
-        Node(E item) {
+        Node(E item) { // 初始化,获得item 和 next 的偏移量,为后期的CAS做准备
             UNSAFE.putObject(this, itemOffset, item);
         }
 
@@ -204,8 +204,8 @@ public class ConcurrentLinkedQueue<E> extends AbstractQueue<E>
         // Unsafe mechanics
 
         private static final sun.misc.Unsafe UNSAFE;
-        private static final long itemOffset;
-        private static final long nextOffset;
+        private static final long itemOffset; // 偏移量
+        private static final long nextOffset; // 下一个元素的偏移量
 
         static {
             try {
@@ -322,55 +322,55 @@ public class ConcurrentLinkedQueue<E> extends AbstractQueue<E>
      *
      * @return {@code true} (as specified by {@link Queue#offer})
      * @throws NullPointerException if the specified element is null
-     */
+     */ // 入列
     public boolean offer(E e) {
-        checkNotNull(e);
-        final Node<E> newNode = new Node<E>(e);
+        checkNotNull(e); //检查节点是否为null
+        final Node<E> newNode = new Node<E>(e); // 创建新节点
 
         for (Node<E> t = tail, p = t;;) {
             Node<E> q = p.next;
-            if (q == null) {
+            if (q == null) { // 表示 p已经是最后一个节点了，尝试加入到队列尾，如果插入失败，则表示其他线程已经修改了p的指向
                 // p is last node
-                if (p.casNext(null, newNode)) {
+                if (p.casNext(null, newNode)) { // t节点的next指向当前节点
                     // Successful CAS is the linearization point
                     // for e to become an element of this queue,
                     // and for newNode to become "live".
                     if (p != t) // hop two nodes at a time
-                        casTail(t, newNode);  // Failure is OK.
+                        casTail(t, newNode);  // Failure is OK. 设置tail 尾节点
                     return true;
                 }
                 // Lost CAS race to another thread; re-read next
             }
-            else if (p == q)
+            else if (p == q) // 等于自身，说明该节点已经被删除了
                 // We have fallen off list.  If tail is unchanged, it
                 // will also be off-list, in which case we need to
                 // jump to head, from which all live nodes are always
                 // reachable.  Else the new tail is a better bet.
-                p = (t != (t = tail)) ? t : head;
-            else
+                p = (t != (t = tail)) ? t : head; // 由于多线程的原因，如果offer()的时候正好该节点已经poll()了，那么会将head指向当前的q，而把p.next指向自己，即：p.next == p, 这样就会导致tail节点滞后head（tail位于head的前面），则需要重新设置p
+            else //  tail并没有指向尾节点
                 // Check for tail updates after two hops.
-                p = (p != t && t != (t = tail)) ? t : q;
+                p = (p != t && t != (t = tail)) ? t : q; // tail已经不是最后一个节点，将p指向最后一个节点
         }
     }
 
-    public E poll() {
-        restartFromHead:
+    public E poll() { // 出列
+        restartFromHead: // 如果出现p被删除的情况需要从head重新开始
         for (;;) {
             for (Node<E> h = head, p = h, q;;) {
                 E item = p.item;
 
-                if (item != null && p.casItem(item, null)) {
+                if (item != null && p.casItem(item, null)) { // item 不为null，则将item 设置为null
                     // Successful CAS is the linearization point
                     // for item to be removed from this queue.
-                    if (p != h) // hop two nodes at a time
-                        updateHead(h, ((q = p.next) != null) ? q : p);
+                    if (p != h) // hop two nodes at a time // p != head 则更新head
+                        updateHead(h, ((q = p.next) != null) ? q : p);  // p.next != null，则将head更新为p.next ,否则更新为p
                     return item;
                 }
-                else if ((q = p.next) == null) {
+                else if ((q = p.next) == null) { // p.next == null 队列为空
                     updateHead(h, p);
                     return null;
                 }
-                else if (p == q)
+                else if (p == q)  // 当一个线程在poll的时候，另一个线程已经把当前的p从队列中删除——将p.next = p，p已经被移除不能继续，需要重新开始
                     continue restartFromHead;
                 else
                     p = q;

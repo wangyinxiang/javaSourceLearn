@@ -228,7 +228,7 @@ public interface Condition {
      * @throws InterruptedException if the current thread is interrupted
      *         (and interruption of thread suspension is supported)
      */
-    void await() throws InterruptedException;
+    void await() throws InterruptedException; // 当前线程在接到信号或被中断之前一直处于等待状态。
 
     /**
      * Causes the current thread to wait until it is signalled.
@@ -264,7 +264,7 @@ public interface Condition {
      * thrown (such as {@link IllegalMonitorStateException}) and the
      * implementation must document that fact.
      */
-    void awaitUninterruptibly();
+    void awaitUninterruptibly(); // 当前线程在接到信号之前一直处于等待状态。【注意：该方法对中断不敏感】
 
     /**
      * Causes the current thread to wait until it is signalled or interrupted,
@@ -355,7 +355,7 @@ public interface Condition {
      * @throws InterruptedException if the current thread is interrupted
      *         (and interruption of thread suspension is supported)
      */
-    long awaitNanos(long nanosTimeout) throws InterruptedException;
+    long awaitNanos(long nanosTimeout) throws InterruptedException; // 当前线程在接到信号、被中断或到达指定等待时间之前一直处于等待状态。返回值表示剩余时间，如果在`nanosTimeout` 之前唤醒，那么返回值 `= nanosTimeout - 消耗时间` ，如果返回值 `<= 0` ,则可以认定它已经超时了
 
     /**
      * Causes the current thread to wait until it is signalled or interrupted,
@@ -370,7 +370,7 @@ public interface Condition {
      * @throws InterruptedException if the current thread is interrupted
      *         (and interruption of thread suspension is supported)
      */
-    boolean await(long time, TimeUnit unit) throws InterruptedException;
+    boolean await(long time, TimeUnit unit) throws InterruptedException; // 当前线程在接到信号、被中断或到达指定等待时间之前一直处于等待状态。
 
     /**
      * Causes the current thread to wait until it is signalled or interrupted,
@@ -447,7 +447,7 @@ public interface Condition {
      * @throws InterruptedException if the current thread is interrupted
      *         (and interruption of thread suspension is supported)
      */
-    boolean awaitUntil(Date deadline) throws InterruptedException;
+    boolean awaitUntil(Date deadline) throws InterruptedException; // 当前线程在接到信号、被中断或到达指定最后期限之前一直处于等待状态。如果没有到指定时间就被通知，则返回 true ，否则表示到了指定时间，返回返回 false 。
 
     /**
      * Wakes up one waiting thread.
@@ -465,7 +465,7 @@ public interface Condition {
      * not held. Typically, an exception such as {@link
      * IllegalMonitorStateException} will be thrown.
      */
-    void signal();
+    void signal(); // 唤醒一个等待线程。该线程从等待方法返回前必须获得与Condition相关的锁。
 
     /**
      * Wakes up all waiting threads.
@@ -483,5 +483,5 @@ public interface Condition {
      * not held. Typically, an exception such as {@link
      * IllegalMonitorStateException} will be thrown.
      */
-    void signalAll();
+    void signalAll(); // 唤醒所有等待线程。能够从等待方法返回的线程必须获得与Condition相关的锁。
 }

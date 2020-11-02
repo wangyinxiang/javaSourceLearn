@@ -152,12 +152,12 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  *
  * @since 1.5
  * @author Doug Lea
- */
-public class CountDownLatch {
+ */ // 允许1或N个线程等待其他线程完成执行。计数不可重置。当前计数到达零之前，#await() 方法会一直受阻塞。
+public class CountDownLatch { // 之后，会释放所有等待的线程，#await() 的所有后续调用都将立即返回。这种现象只出现一次——计数无法被重置。如果需要重置计数，请考虑使用 CyclicBarrier 。
     /**
      * Synchronization control For CountDownLatch.
      * Uses AQS state to represent count.
-     */
+     */ // 基于共享锁实现的
     private static final class Sync extends AbstractQueuedSynchronizer {
         private static final long serialVersionUID = 4982264981922014374L;
 
@@ -165,21 +165,21 @@ public class CountDownLatch {
             setState(count);
         }
 
-        int getCount() {
+        int getCount() { // 获取同步状态
             return getState();
         }
 
-        protected int tryAcquireShared(int acquires) {
+        protected int tryAcquireShared(int acquires) { // 获取同步状态
             return (getState() == 0) ? 1 : -1;
         }
 
-        protected boolean tryReleaseShared(int releases) {
+        protected boolean tryReleaseShared(int releases) { // 释放同步状态
             // Decrement count; signal when transition to zero
             for (;;) {
-                int c = getState();
+                int c = getState(); //获取锁状态
                 if (c == 0)
                     return false;
-                int nextc = c-1;
+                int nextc = c-1; //计算新“锁计数器”
                 if (compareAndSetState(c, nextc))
                     return nextc == 0;
             }
@@ -226,7 +226,7 @@ public class CountDownLatch {
      *
      * @throws InterruptedException if the current thread is interrupted
      *         while waiting
-     */
+     */ // 使当前线程在锁存器倒计数至零之前一直等待，除非线程被中断
     public void await() throws InterruptedException {
         sync.acquireSharedInterruptibly(1);
     }
@@ -271,7 +271,7 @@ public class CountDownLatch {
      *         if the waiting time elapsed before the count reached zero
      * @throws InterruptedException if the current thread is interrupted
      *         while waiting
-     */
+     */ // 当前线程在锁存器倒计数至零之前一直等待，除非线程被中断，或者等待超时
     public boolean await(long timeout, TimeUnit unit)
         throws InterruptedException {
         return sync.tryAcquireSharedNanos(1, unit.toNanos(timeout));

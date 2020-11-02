@@ -92,7 +92,7 @@ package java.util.concurrent;
  * @since 1.5
  * @author Doug Lea
  * @param <V> The result type returned by this Future's {@code get} method
- */
+ */ // 异步计算的顶层接口
 public interface Future<V> {
 
     /**
@@ -115,7 +115,7 @@ public interface Future<V> {
      * @return {@code false} if the task could not be cancelled,
      * typically because it has already completed normally;
      * {@code true} otherwise
-     */
+     */ // 试图取消对此任务的执行
     boolean cancel(boolean mayInterruptIfRunning);
 
     /**
@@ -123,7 +123,7 @@ public interface Future<V> {
      * normally.
      *
      * @return {@code true} if this task was cancelled before it completed
-     */
+     */ // 如果在任务正常完成前将其取消，则返回 true
     boolean isCancelled();
 
     /**
@@ -134,7 +134,7 @@ public interface Future<V> {
      * {@code true}.
      *
      * @return {@code true} if this task completed
-     */
+     */ // 如果任务已完成，则返回 true
     boolean isDone();
 
     /**
@@ -147,7 +147,7 @@ public interface Future<V> {
      * exception
      * @throws InterruptedException if the current thread was interrupted
      * while waiting
-     */
+     */ // 如有必要，等待计算完成，然后获取其结果
     V get() throws InterruptedException, ExecutionException;
 
     /**
@@ -163,7 +163,7 @@ public interface Future<V> {
      * @throws InterruptedException if the current thread was interrupted
      * while waiting
      * @throws TimeoutException if the wait timed out
-     */
+     */ // 如有必要，最多等待为使计算完成所给定的时间之后，获取其结果（如果结果可用）
     V get(long timeout, TimeUnit unit)
         throws InterruptedException, ExecutionException, TimeoutException;
 }

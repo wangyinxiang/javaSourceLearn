@@ -70,7 +70,7 @@ import java.util.function.Supplier;
  *
  * @author  Josh Bloch and Doug Lea
  * @since   1.2
- */
+ */ // ThreadLocal是为每一个线程创建一个单独的变量副本，故而每个线程都可以独立地改变自己所拥有的变量副本，而不会影响其他线程所对应的副本
 public class ThreadLocal<T> {
     /**
      * ThreadLocals rely on per-thread linear-probe hash maps attached
@@ -81,7 +81,7 @@ public class ThreadLocal<T> {
      * in the common case where consecutively constructed ThreadLocals
      * are used by the same threads, while remaining well-behaved in
      * less common cases.
-     */
+     */ // threadLocalHashCode应该是ThreadLocal的散列值，定义为final，表示ThreadLocal一旦创建其散列值就已经确定了，生成过程则是调用nextHashCode()
     private final int threadLocalHashCode = nextHashCode();
 
     /**
@@ -122,8 +122,8 @@ public class ThreadLocal<T> {
      * anonymous inner class will be used.
      *
      * @return the initial value for this thread-local
-     */
-    protected T initialValue() {
+     */ // 需要子类实现它，使用ThreadLocal的时候一般都应该覆盖该方法。该方法不能显示调用，只有在第一次调用get()或者set()方法时才会被执行，并且仅执行1次
+    protected T initialValue() { // 返回此线程局部变量的当前线程的“初始值”。
         return null;
     }
 
@@ -155,15 +155,15 @@ public class ThreadLocal<T> {
      * by an invocation of the {@link #initialValue} method.
      *
      * @return the current thread's value of this thread-local
-     */
+     */ // 返回此线程局部变量的当前线程副本中的值
     public T get() {
         Thread t = Thread.currentThread();
-        ThreadLocalMap map = getMap(t);
+        ThreadLocalMap map = getMap(t); // 获取当前线程的成员变量 threadLocal
         if (map != null) {
-            ThreadLocalMap.Entry e = map.getEntry(this);
+            ThreadLocalMap.Entry e = map.getEntry(this);  // 从当前线程的ThreadLocalMap获取相对应的Entry
             if (e != null) {
                 @SuppressWarnings("unchecked")
-                T result = (T)e.value;
+                T result = (T)e.value; // 获取目标值
                 return result;
             }
         }
@@ -195,7 +195,7 @@ public class ThreadLocal<T> {
      *
      * @param value the value to be stored in the current thread's copy of
      *        this thread-local.
-     */
+     */ // 将此线程局部变量的当前线程副本中的值设置为指定值
     public void set(T value) {
         Thread t = Thread.currentThread();
         ThreadLocalMap map = getMap(t);
@@ -294,7 +294,7 @@ public class ThreadLocal<T> {
      * WeakReferences for keys. However, since reference queues are not
      * used, stale entries are guaranteed to be removed only when
      * the table starts running out of space.
-     */
+     */ // 该内部类才是实现线程隔离机制的关键，key为当前ThreadLocal对象，value则是对应线程的变量副本
     static class ThreadLocalMap {
 
         /**
@@ -409,7 +409,7 @@ public class ThreadLocal<T> {
          *
          * @param  key the thread local object
          * @return the entry associated with key, or null if no such
-         */
+         */ // 由于采用了开放定址法，所以当前key的散列值和元素在数组的索引并不是完全对应的，首先取一个探测数（key的散列值），如果所对应的key就是我们所要找的元素，则返回，否则调用getEntryAfterMiss()
         private Entry getEntry(ThreadLocal<?> key) {
             int i = key.threadLocalHashCode & (table.length - 1);
             Entry e = table[i];
@@ -437,7 +437,7 @@ public class ThreadLocal<T> {
                 if (k == key)
                     return e;
                 if (k == null)
-                    expungeStaleEntry(i);
+                    expungeStaleEntry(i); // 用于处理key == null，有利于GC回收，能够有效地避免内存泄漏
                 else
                     i = nextIndex(i, len);
                 e = tab[i];
@@ -450,7 +450,7 @@ public class ThreadLocal<T> {
          *
          * @param key the thread local object
          * @param value the value to be set
-         */
+         */ // 采用开放定址法，与hashMap的不太一样
         private void set(ThreadLocal<?> key, Object value) {
 
             // We don't use a fast path as with get() because it is at
@@ -460,28 +460,28 @@ public class ThreadLocal<T> {
 
             Entry[] tab = table;
             int len = tab.length;
-            int i = key.threadLocalHashCode & (len-1);
+            int i = key.threadLocalHashCode & (len-1); // 根据 ThreadLocal 的散列值，查找对应元素在数组中的位置
 
             for (Entry e = tab[i];
                  e != null;
-                 e = tab[i = nextIndex(i, len)]) {
+                 e = tab[i = nextIndex(i, len)]) { // 采用“线性探测法”，寻找合适位置
                 ThreadLocal<?> k = e.get();
 
-                if (k == key) {
+                if (k == key) { // key 存在，直接覆盖
                     e.value = value;
                     return;
                 }
 
-                if (k == null) {
-                    replaceStaleEntry(key, value, i);
+                if (k == null) { // key == null，但是存在值（因为此处的e != null），说明之前的ThreadLocal对象已经被回收
+                    replaceStaleEntry(key, value, i); // 用新元素替换陈旧的元素
                     return;
                 }
             }
 
-            tab[i] = new Entry(key, value);
+            tab[i] = new Entry(key, value); // ThreadLocal对应的key实例不存在也没有陈旧元素，new 一个
             int sz = ++size;
-            if (!cleanSomeSlots(i, sz) && sz >= threshold)
-                rehash();
+            if (!cleanSomeSlots(i, sz) && sz >= threshold) //  cleanSomeSlots 清楚陈旧的Entry（key == null）
+                rehash(); // 如果没有清理陈旧的 Entry 并且数组中的元素大于了阈值，则进行 rehash
         }
 
         /**

@@ -84,7 +84,7 @@ public class Executors {
      * @param nThreads the number of threads in the pool
      * @return the newly created thread pool
      * @throws IllegalArgumentException if {@code nThreads <= 0}
-     */
+     */ // 使用LinkedBlockingQueue的无界队列，导致maximumPoolSize和拒绝策略无效
     public static ExecutorService newFixedThreadPool(int nThreads) {
         return new ThreadPoolExecutor(nThreads, nThreads,
                                       0L, TimeUnit.MILLISECONDS,
@@ -166,7 +166,7 @@ public class Executors {
      * guaranteed not to be reconfigurable to use additional threads.
      *
      * @return the newly created single-threaded Executor
-     */
+     */ // 单线程池，使用无界队列
     public static ExecutorService newSingleThreadExecutor() {
         return new FinalizableDelegatedExecutorService
             (new ThreadPoolExecutor(1, 1,
@@ -211,8 +211,8 @@ public class Executors {
      * may be created using {@link ThreadPoolExecutor} constructors.
      *
      * @return the newly created thread pool
-     */
-    public static ExecutorService newCachedThreadPool() {
+     */ // 核心池为0，最大线程数为Integer.MAX_VALUE。意味着所有的任务一提交就会加入到阻塞队列中。阻塞队列采用的SynchronousQueue
+    public static ExecutorService newCachedThreadPool() { // 如果主线程提交任务的速度远远大于CachedThreadPool的处理速度，则CachedThreadPool会不断地创建新线程来执行任务，这样有可能会导致系统耗尽CPU和内存资源
         return new ThreadPoolExecutor(0, Integer.MAX_VALUE,
                                       60L, TimeUnit.SECONDS,
                                       new SynchronousQueue<Runnable>());
